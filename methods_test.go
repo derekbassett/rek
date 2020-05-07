@@ -3,10 +3,10 @@ package rek
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -30,12 +30,18 @@ func TestCall(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 			handler := func(w http.ResponseWriter, req *http.Request) {
-				assert.Equal(t, tc.method, req.Method)
-				assert.Contains(t, req.URL.Path, tc.path)
+				if tc.method != req.Method {
+					t.Errorf("method is wrong, got %q want %q", req.Method, tc.method)
+				}
+				if !strings.Contains(req.URL.Path, tc.path) {
+					t.Errorf("path does not contain expected path, got %q want %q", req.URL.Path, tc.path)
+				}
 				b, err := ioutil.ReadAll(req.Body)
-				if tc.requestBody != "" && assert.NoError(t, err) {
-					got := string(bytes.TrimSpace(b))
-					assert.Equal(t, tc.requestBody, got)
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+				if got, want := string(bytes.TrimSpace(b)), tc.requestBody; got != want {
+					t.Errorf("request body is wrong, got %q want %q", got, want)
 				}
 				w.WriteHeader(tc.statusCode)
 				if tc.responseBody != "" {
@@ -47,11 +53,17 @@ func TestCall(t *testing.T) {
 			defer srv.Close()
 			endpoint := fmt.Sprintf("%s%s", srv.URL, tc.path)
 			resp, err := call(tc.method, endpoint, String(tc.requestBody))
-
-			if assert.NoError(t, err) {
-				assert.Equal(t, tc.statusCode, resp.StatusCode())
-				assert.Equal(t, len(tc.responseBody), int(resp.ContentLength()))
-				assert.Equal(t, []byte(tc.responseBody), resp.Content())
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if resp.StatusCode() != tc.statusCode {
+				t.Errorf("status code is wrong, got %q want %q", resp.StatusCode(), tc.statusCode)
+			}
+			if got, want := int(resp.ContentLength()), len(tc.responseBody); got != want {
+				t.Errorf("content length is wrong, got %d want %d", got, want)
+			}
+			if got, want := resp.Content(), []byte(tc.responseBody); !bytes.Equal(got, want) {
+				t.Errorf("content is wrong, got %s want %s", got, want)
 			}
 		})
 	}

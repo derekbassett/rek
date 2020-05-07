@@ -14,6 +14,10 @@ func makeRequest(method, endpoint string, opts *options) (*http.Request, error) 
 	var req *http.Request
 	var err error
 
+	if opts.text != "" {
+		body = strings.NewReader(opts.text)
+	}
+
 	if opts.data != nil {
 		data, err := getData(opts)
 		if err != nil {
