@@ -38,7 +38,7 @@ func TestCall(t *testing.T) {
 				}
 				b, err := ioutil.ReadAll(req.Body)
 				if err != nil {
-					t.Fatalf("unexpected error: %s", err)
+					t.Fatal(err)
 				}
 				if got, want := string(bytes.TrimSpace(b)), tc.requestBody; got != want {
 					t.Errorf("request body is wrong, got %q want %q", got, want)
@@ -48,13 +48,13 @@ func TestCall(t *testing.T) {
 					w.Write([]byte(tc.responseBody))
 				}
 			}
-
 			srv := httptest.NewServer(http.HandlerFunc(handler))
 			defer srv.Close()
+
 			endpoint := fmt.Sprintf("%s%s", srv.URL, tc.path)
 			resp, err := call(tc.method, endpoint, String(tc.requestBody))
 			if err != nil {
-				t.Fatalf("unexpected error: %s", err)
+				t.Fatal(err)
 			}
 			if resp.StatusCode() != tc.statusCode {
 				t.Errorf("status code is wrong, got %q want %q", resp.StatusCode(), tc.statusCode)
