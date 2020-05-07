@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,7 @@ type options struct {
 	reqModifier       func(*http.Request)
 	apiKey            string
 	ctx               context.Context
+	text              string
 }
 
 func (o *options) validate() error {
@@ -44,6 +46,10 @@ func (o *options) validate() error {
 	}
 
 	if o.formData != nil {
+		i++
+	}
+
+	if o.text != "" {
 		i++
 	}
 
@@ -83,6 +89,13 @@ func BasicAuth(username, password string) option {
 func Data(data interface{}) option {
 	return func(opts *options) {
 		opts.data = data
+	}
+}
+
+// Add a String that can be sent
+func String(text string) option {
+	return func(opts *options) {
+		opts.text = text
 	}
 }
 
@@ -248,13 +261,18 @@ func setCookies(req *http.Request, opts *options) {
 	}
 }
 
+func (o *options) makeRequest() (io.Reader, error) {
+	if o.text != "" {
+		return strings.NewReader(o.text), nil
+	}
+	return nil, nil
+}
+
 func getData(opts *options) (io.Reader, error) {
 	var buf bytes.Buffer
-
 	if err := gob.NewEncoder(&buf).Encode(opts.data); err != nil {
 		return nil, err
 	}
-
 	return &buf, nil
 }
 
