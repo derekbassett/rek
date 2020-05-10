@@ -1,6 +1,7 @@
 package rek
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -79,7 +80,7 @@ func (r *Response) Text() string {
 
 // Marshal a JSON response body.
 func (r *Response) Json(v interface{}) error {
-	return json.Unmarshal(r.Content, v)
+	return json.NewDecoder(bytes.NewBuffer(r.Content)).Decode(v)
 }
 
 // The Content-Type header for the request (if any).

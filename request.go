@@ -4,142 +4,67 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strings"
+)
+
+var DefaultRequest = &Request{}
+
+// Content-Type MIME of the most common data formats.
+const (
+	MIMEJSON              = "application/json"
+	MIMEHTML              = "text/html"
+	MIMEXML               = "application/xml"
+	MIMEXML2              = "text/xml"
+	MIMEPlain             = "text/plain; charset=utf-8"
+	MIMEPOSTForm          = "application/x-www-form-urlencoded"
+	MIMEMultipartPOSTForm = "multipart/form-data"
+	MIMEPROTOBUF          = "application/x-protobuf"
+	MIMEMSGPACK           = "application/x-msgpack"
+	MIMEMSGPACK2          = "application/msgpack"
+	MIMEYAML              = "application/x-yaml"
 )
 
 // GET request
 func Get(url string, opts ...option) (*Response, error) {
-	return Do(http.MethodGet, url, opts...)
+	return DefaultRequest.Do(http.MethodGet, url, nil, opts...)
 }
 
 // POST request
-func Post(url string, opts ...option) (*Response, error) {
-	return Do(http.MethodPost, url, opts...)
+func Post(url string, reader *BodyReader, opts ...option) (*Response, error) {
+	return DefaultRequest.Do(http.MethodPost, url, reader, opts...)
 }
 
 // PUT request
-func Put(url string, opts ...option) (*Response, error) {
-	return Do(http.MethodPut, url, opts...)
+func Put(url string, reader *BodyReader, opts ...option) (*Response, error) {
+	return DefaultRequest.Do(http.MethodPut, url, reader, opts...)
 }
 
 // DELETE request
 func Delete(url string, opts ...option) (*Response, error) {
-	return Do(http.MethodDelete, url, opts...)
+	return DefaultRequest.Do(http.MethodDelete, url, nil, opts...)
 }
 
 // PATCH request
-func Patch(url string, opts ...option) (*Response, error) {
-	return Do(http.MethodPatch, url, opts...)
+func Patch(url string, reader *BodyReader, opts ...option) (*Response, error) {
+	return DefaultRequest.Do(http.MethodPatch, url, reader, opts...)
 }
 
 // HEAD request
 func Head(url string, opts ...option) (*Response, error) {
-	options, err := buildOptions(opts...)
+	return DefaultRequest.Do(http.MethodHead, url, nil, opts...)
+}
 
 	cl := makeClient(options)
 
-	res, err := cl.Head(url)
-	if err != nil {
-		return nil, err
-	}
+	Endpoint          string
+	Method            string
+	ContentTypeReader ContentTypeReader
+	Opts              []option
 
 	return makeResponse(res)
 }
 
-func Do(method, endpoint string, opts ...option) (*Response, error) {
+func (r *Request) Do(method, endpoint string, contentTypeReader ContentTypeReader, opts ...option) (*Response, error) {
 	session := NewSession()
 	defer session.Close()
-	return session.Request(method, endpoint, opts...)
-}
-
-type Request struct {
-	Endpoint string
-	Method   string
-	Opts     []option
-}
-
-type PreparedRequest struct {
-	Endpoint string
-	Method   string
-	Opts     []option
-}
-
-func makeRequest(method, endpoint string, opts *options) (*http.Request, error) {
-	var body io.Reader
-	var contentType string
-	var req *http.Request
-	var err error
-
-	if opts.text != "" {
-		body = strings.NewReader(opts.text)
-	}
-
-	if opts.data != nil {
-		data, err := getData(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		body = data
-	}
-
-	if opts.jsonObj != nil {
-		js, err := getJson(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		body = js
-	}
-
-	if opts.file != nil {
-		b, ct, err := buildMultipartBody(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		contentType = ct
-		body = b
-	}
-
-	if opts.formData != nil {
-		form := url.Values{}
-
-		for k, v := range opts.formData {
-			form.Set(k, v)
-		}
-
-		body = strings.NewReader(form.Encode())
-	}
-
-	req, err = http.NewRequest(method, endpoint, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if opts.ctx != nil {
-		req = req.WithContext(opts.ctx)
-	}
-
-	setHeaders(req, opts)
-
-	if opts.file != nil {
-		req.Header.Set("Content-Type", contentType)
-	}
-
-	if opts.bearer != "" {
-		bearerHeader := fmt.Sprintf("Bearer %s", opts.bearer)
-		req.Header.Set("Authorization", bearerHeader)
-	}
-
-	setBasicAuth(req, opts)
-
-	setCookies(req, opts)
-
-	if opts.reqModifier != nil {
-		opts.reqModifier(req)
-	}
-
-	return req, nil
+	return session.Request(method, endpoint, contentTypeReader, opts...)
 }
