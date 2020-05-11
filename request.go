@@ -52,16 +52,13 @@ func makeRequest(method, endpoint string, opts *options) (*http.Request, error) 
 		body = strings.NewReader(form.Encode())
 	}
 
+	req, err = http.NewRequest(method, endpoint, body)
+	if err != nil {
+		return nil, err
+	}
+
 	if opts.ctx != nil {
-		req, err = http.NewRequestWithContext(opts.ctx, method, endpoint, body)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		req, err = http.NewRequest(method, endpoint, body)
-		if err != nil {
-			return nil, err
-		}
+		req = req.WithContext(opts.ctx)
 	}
 
 	setHeaders(req, opts)
