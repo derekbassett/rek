@@ -20,10 +20,6 @@ jobs:
             mkdir -p /tmp/artifacts
             mkdir -p ${TEST_RESULTS}
 
-      #      - restore_cache: # restores saved cache if no changes are detected since last run
-      #          keys:
-      #            - go-mod-v4-{{ checksum "go.sum" }}
-
       - run: go get -v -t -d ./...
       - run:
           command: |
@@ -31,11 +27,6 @@ jobs:
             go tool cover -html=c.out -o coverage.html
             mv coverage.html /tmp/artifacts
       - run: go build ./...
-
-      #      - save_cache:
-      #          key: go-mod-v4-{{ checksum "go.sum" }}
-      #          paths:
-      #           - "/go/pkg/mod"
 
       - store_artifacts: # upload test summary for display in Artifacts
           path: /tmp/test-results
