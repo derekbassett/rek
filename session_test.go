@@ -105,3 +105,11 @@ func TestRequest(t *testing.T) {
 		t.Errorf("expected method %q; got %q", url, tr.req.URL.String())
 	}
 }
+
+func TestWithTransport(t *testing.T) {
+	t.Fatal("not implemented")
+}
+
+func TestWithClient(t *testing.T) {
+	t.Fatal("not implemented")
+}

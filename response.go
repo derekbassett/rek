@@ -44,6 +44,9 @@ func (r *Response) Json(v interface{}) error {
 
 // The Content-Type header for the request (if any).
 func (r *Response) ContentType() string {
+	if r.Headers == nil {
+		return ""
+	}
 	return r.Headers.Get("Content-Type")
 }
 

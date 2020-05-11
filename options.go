@@ -20,6 +20,7 @@ type options struct {
 	apiKey            string
 	ctx               context.Context
 	roundTripper      http.RoundTripper
+	client            *http.Client
 }
 
 type option func(*options)
@@ -88,14 +89,6 @@ func Accept(accept string) option {
 	}
 }
 
-// RoundTripper apply a user-provided round tripper modification function. Applies after all other request modifications
-// have been made by the selected options.
-func RoundTripper(roundTripper http.RoundTripper) option {
-	return func(opts *options) {
-		opts.roundTripper = roundTripper
-	}
-}
-
 // Adds an API key to the request.
 func ApiKey(key string) option {
 	return func(opts *options) {
@@ -103,8 +96,24 @@ func ApiKey(key string) option {
 	}
 }
 
+// WithRoundTripper apply a user-provided round tripper modification function. Applies after all other request modifications
+// have been made by the selected options.
+func WithTransport(transport http.RoundTripper) option {
+	return func(opts *options) {
+		opts.roundTripper = transport
+	}
+}
+
+// WithClient uses a user-provided http client to the request.  Applies after all other requested modifications
+// have been made by the selected options.
+func WithClient(client *http.Client) option {
+	return func(opts *options) {
+		opts.client = client
+	}
+}
+
 // Pass a context into the HTTP request (allows for request cancellation, for example).
-func Context(ctx context.Context) option {
+func WithContext(ctx context.Context) option {
 	return func(opts *options) {
 		opts.ctx = ctx
 	}

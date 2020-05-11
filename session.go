@@ -5,12 +5,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 )
 
 type Session struct {
 	Header    http.Header
+	Client    *http.Client
 	Transport http.RoundTripper
 }
 
@@ -55,7 +55,7 @@ func (s *Session) Request(method, endpoint string, body *BodyReader, opts ...opt
 }
 
 func (s *Session) Send(request Request) (*Response, error) {
-	u, err := url.Parse(request.Endpoint)
+	req, err := makeRequest(request.Method, request.Endpoint, request.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -64,13 +64,10 @@ func (s *Session) Send(request Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	req = applyRequestOptions(req, options)
 
-	req, err := makeRequest(request.Method, u.String(), request.Body, options)
-	if err != nil {
-		return nil, err
-	}
-
-	cl := makeClient(options)
+	cl := s.client()
+	cl = applyClientOptions(cl, options)
 	cl.Transport = s.transport()
 	res, err := cl.Do(req)
 	if err != nil {
@@ -96,6 +93,13 @@ func (s *Session) transport() http.RoundTripper {
 	return http.DefaultTransport
 }
 
+func (s *Session) client() *http.Client {
+	if s.Client != nil {
+		return s.Client
+	}
+	return &http.Client{}
+}
+
 func buildOptions(opts ...option) (*options, error) {
 	os := &options{
 		headers: nil,
@@ -109,7 +113,7 @@ func buildOptions(opts ...option) (*options, error) {
 	return os, nil
 }
 
-func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options) (*http.Request, error) {
+func makeRequest(method, endpoint string, bodyReader *BodyReader) (*http.Request, error) {
 	var body io.Reader
 	var contentType string
 
@@ -123,6 +127,13 @@ func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options)
 		return nil, err
 	}
 
+	if bodyReader != nil && contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+	return req, nil
+}
+
+func applyRequestOptions(req *http.Request, opts *options) *http.Request {
 	if opts.ctx != nil {
 		req = req.WithContext(opts.ctx)
 	}
@@ -145,10 +156,6 @@ func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options)
 		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", opts.apiKey))
 	}
 
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-
 	if opts.bearer != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", opts.bearer))
 	}
@@ -163,27 +170,25 @@ func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options)
 		}
 	}
 
-	return req, nil
+	return req
 }
 
-func makeClient(opts *options) *http.Client {
-	c := &http.Client{}
-
+func applyClientOptions(cl *http.Client, opts *options) *http.Client {
 	if opts.cookieJar != nil {
-		c.Jar = *opts.cookieJar
+		cl.Jar = *opts.cookieJar
 	}
 
 	if opts.timeout != 0 {
-		c.Timeout = opts.timeout
+		cl.Timeout = opts.timeout
 	}
 
 	if opts.disallowRedirects {
-		c.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		cl.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
 	}
 
-	return c
+	return cl
 }
 
 func makeResponse(res *http.Response) (*Response, error) {
