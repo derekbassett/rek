@@ -191,11 +191,12 @@ func makeResponse(res *http.Response) (*Response, error) {
 		Status:        res.Status,
 		StatusCode:    res.StatusCode,
 		ContentLength: res.ContentLength,
+		Encoding:      res.TransferEncoding,
 		res:           res,
 	}
 
 	if res.Header != nil {
-		headers := make(map[string][]string)
+		headers := make(map[string][]string, len(res.Header))
 
 		for k, v := range res.Header {
 			headers[k] = v
@@ -213,10 +214,6 @@ func makeResponse(res *http.Response) (*Response, error) {
 		}
 
 		resp.Content = bs
-	}
-
-	if res.TransferEncoding != nil {
-		resp.Encoding = res.TransferEncoding
 	}
 
 	if res.Cookies() != nil {
