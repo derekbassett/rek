@@ -1,18 +1,21 @@
 package rek
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 )
 
 type Session struct {
-	Header http.Header
+	Header    http.Header
+	Transport http.RoundTripper
 }
 
 func NewSession() *Session {
-	return &Session{
-	}
+	return &Session{}
 }
 
 // Get request
@@ -162,7 +165,7 @@ func makeRequest(method, endpoint string, bodyReader ContentTypeReader, opts *op
 
 	if opts.username != "" && opts.password != "" {
 		req.SetBasicAuth(opts.username, opts.password)
-		Opts: request.Opts,
+	}
 
 	if opts.cookies != nil {
 		for _, c := range opts.cookies {

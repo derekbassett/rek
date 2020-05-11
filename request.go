@@ -1,8 +1,6 @@
 package rek
 
 import (
-	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -53,14 +51,11 @@ func Head(url string, opts ...option) (*Response, error) {
 	return DefaultRequest.Do(http.MethodHead, url, nil, opts...)
 }
 
-	cl := makeClient(options)
-
+type Request struct {
 	Endpoint          string
 	Method            string
 	ContentTypeReader ContentTypeReader
 	Opts              []option
-
-	return makeResponse(res)
 }
 
 func (r *Request) Do(method, endpoint string, contentTypeReader ContentTypeReader, opts ...option) (*Response, error) {

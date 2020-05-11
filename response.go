@@ -3,7 +3,6 @@ package rek
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -31,46 +30,6 @@ type Response struct {
 
 	cookies []*http.Cookie
 	res     *http.Response
-}
-
-func makeResponse(res *http.Response) (*Response, error) {
-	resp := &Response{
-		Status:        res.Status,
-		StatusCode:    res.StatusCode,
-		ContentLength: res.ContentLength,
-		res:           res,
-	}
-
-	if res.Header != nil {
-		headers := make(map[string][]string)
-
-		for k, v := range res.Header {
-			headers[k] = v
-		}
-
-		resp.Headers = headers
-	}
-
-	if res.Body != nil {
-		defer res.Body.Close()
-
-		bs, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		resp.Content = bs
-	}
-
-	if res.TransferEncoding != nil {
-		resp.Encoding = res.TransferEncoding
-	}
-
-	if res.Cookies() != nil {
-		resp.cookies = res.Cookies()
-	}
-
-	return resp, nil
 }
 
 // The response body as a string.
