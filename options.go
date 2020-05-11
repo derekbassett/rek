@@ -11,11 +11,8 @@ type options struct {
 	timeout           time.Duration
 	username          string
 	password          string
-	data              interface{}
 	userAgent         string
-	jsonObj           interface{}
 	cookies           []*http.Cookie
-	formData          map[string]string
 	cookieJar         *http.CookieJar
 	bearer            string
 	disallowRedirects bool
@@ -23,21 +20,6 @@ type options struct {
 	apiKey            string
 	ctx               context.Context
 	roundTripper      http.RoundTripper
-}
-
-func (o *options) validate() error {
-	i := 0
-
-	if o.formData != nil {
-		i++
-	}
-
-	// Throw an error if the request body has been set more than once.
-	if i > 1 {
-		return ErrRequestBodySetMultipleTimes
-	}
-
-	return nil
 }
 
 type option func(*options)

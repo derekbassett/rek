@@ -110,10 +110,6 @@ func buildOptions(opts ...option) (*options, error) {
 		opt(os)
 	}
 
-	if err := os.validate(); err != nil {
-		return nil, err
-	}
-
 	return os, nil
 }
 
