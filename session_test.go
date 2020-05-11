@@ -19,7 +19,7 @@ func TestGetRequestFormat(t *testing.T) {
 	tr := &recordingTransport{}
 	session := &Session{Transport: tr}
 	url := "http://dummy.faketld/"
-	_, _ = session.Get(url)
+	session.Get(url) //nolint
 	if tr.req.Method != "GET" {
 		t.Errorf("expected method %q; got %q", "GET", tr.req.Method)
 	}
@@ -32,7 +32,7 @@ func TestPutRequestFormat(t *testing.T) {
 	tr := &recordingTransport{}
 	session := &Session{Transport: tr}
 	url := "http://dummy.faketld/"
-	_, _ = session.Put(url, String("Reader"))
+	session.Put(url, String("Reader")) //nolint
 	if tr.req.Method != "PUT" {
 		t.Errorf("expected method %q; got %q", "PUT", tr.req.Method)
 	}

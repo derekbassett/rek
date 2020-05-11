@@ -65,7 +65,7 @@ func TestDo(t *testing.T) {
 				}
 				w.WriteHeader(tc.statusCode)
 				if tc.responseBody != "" {
-					_, _ = w.Write([]byte(tc.responseBody))
+					w.Write([]byte(tc.responseBody)) //nolint
 				}
 			}
 			srv := httptest.NewServer(http.HandlerFunc(handler))
