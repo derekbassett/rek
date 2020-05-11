@@ -9,14 +9,9 @@ import (
 	"strings"
 )
 
-type ContentTypeReader interface {
-	io.Reader
-	ContentType() string
-}
-
 type BodyReader struct {
 	io.Reader
-	contentType string
+	ContentType string
 }
 
 //
@@ -27,8 +22,12 @@ func Must(reader *BodyReader, err error) *BodyReader {
 	return reader
 }
 
-func (b *BodyReader) ContentType() string {
-	return b.contentType
+// Add a String that can be sent
+func String(text string) *BodyReader {
+	return &BodyReader{
+		strings.NewReader(text),
+		"text/plain",
+	}
 }
 
 // Add any interface{} that can be serialized to a []byte and apply a "Content-Type: application/octet-stream" header.
@@ -44,14 +43,6 @@ func EncodeBinary(data interface{}) (*BodyReader, error) {
 	}, nil
 }
 
-// Add a String that can be sent
-func String(text string) *BodyReader {
-	return &BodyReader{
-		strings.NewReader(text),
-		"text/plain",
-	}
-}
-
 // Add any interface{} that can be marshaled as JSON to the request body and apply a "Content-Type:
 // application/json;charset=utf-8" header.
 func EncodeJson(v interface{}) (*BodyReader, error) {
@@ -63,6 +54,20 @@ func EncodeJson(v interface{}) (*BodyReader, error) {
 	return &BodyReader{
 		bytes.NewReader(buf.Bytes()),
 		"application/json; charset=utf-8",
+	}, nil
+}
+
+// Add any interface{} that can be marshaled as XML to the request body and apply a "Content-Type:
+// application/xml;charset=utf-8" header.
+func EncodeXml(v interface{}) (*BodyReader, error) {
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return &BodyReader{
+		bytes.NewReader(buf.Bytes()),
+		"application/xml; charset=utf-8",
 	}, nil
 }
 

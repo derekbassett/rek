@@ -59,7 +59,7 @@ func (s *Session) Send(request Request) (*Response, error) {
 		return nil, err
 	}
 
-	req, err := makeRequest(request.Method, u.String(), request.ContentTypeReader, options)
+	req, err := makeRequest(request.Method, u.String(), request.Body, options)
 	if err != nil {
 		return nil, err
 	}
@@ -79,12 +79,12 @@ func (s *Session) Send(request Request) (*Response, error) {
 	return resp, nil
 }
 
-func (s *Session) Request(method, endpoint string, contentTypeReader ContentTypeReader, opts ...option) (*Response, error) {
+func (s *Session) Request(method, endpoint string, body *BodyReader, opts ...option) (*Response, error) {
 	req := Request{
-		Endpoint:          endpoint,
-		Method:            method,
-		ContentTypeReader: contentTypeReader,
-		Opts:              opts,
+		Endpoint: endpoint,
+		Method:   method,
+		Body:     body,
+		Opts:     opts,
 	}
 	return s.Send(req)
 }
@@ -113,7 +113,7 @@ func buildOptions(opts ...option) (*options, error) {
 	return os, nil
 }
 
-func makeRequest(method, endpoint string, bodyReader ContentTypeReader, opts *options) (*http.Request, error) {
+func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options) (*http.Request, error) {
 	var body io.Reader
 	var contentType string
 	var req *http.Request
@@ -121,7 +121,7 @@ func makeRequest(method, endpoint string, bodyReader ContentTypeReader, opts *op
 
 	if bodyReader != nil {
 		body = bodyReader
-		contentType = bodyReader.ContentType()
+		contentType = bodyReader.ContentType
 	}
 
 	req, err = http.NewRequest(method, endpoint, body)

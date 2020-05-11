@@ -6,21 +6,6 @@ import (
 
 var DefaultRequest = &Request{}
 
-// Content-Type MIME of the most common data formats.
-const (
-	MIMEJSON              = "application/json"
-	MIMEHTML              = "text/html"
-	MIMEXML               = "application/xml"
-	MIMEXML2              = "text/xml"
-	MIMEPlain             = "text/plain; charset=utf-8"
-	MIMEPOSTForm          = "application/x-www-form-urlencoded"
-	MIMEMultipartPOSTForm = "multipart/form-data"
-	MIMEPROTOBUF          = "application/x-protobuf"
-	MIMEMSGPACK           = "application/x-msgpack"
-	MIMEMSGPACK2          = "application/msgpack"
-	MIMEYAML              = "application/x-yaml"
-)
-
 // GET request
 func Get(url string, opts ...option) (*Response, error) {
 	return DefaultRequest.Do(http.MethodGet, url, nil, opts...)
@@ -52,14 +37,14 @@ func Head(url string, opts ...option) (*Response, error) {
 }
 
 type Request struct {
-	Endpoint          string
-	Method            string
-	ContentTypeReader ContentTypeReader
-	Opts              []option
+	Endpoint string
+	Method   string
+	Body     *BodyReader
+	Opts     []option
 }
 
-func (r *Request) Do(method, endpoint string, contentTypeReader ContentTypeReader, opts ...option) (*Response, error) {
+func (r *Request) Do(method, endpoint string, body *BodyReader, opts ...option) (*Response, error) {
 	session := NewSession()
 	defer session.Close()
-	return session.Request(method, endpoint, contentTypeReader, opts...)
+	return session.Request(method, endpoint, body, opts...)
 }
