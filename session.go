@@ -14,10 +14,6 @@ type Session struct {
 	Transport http.RoundTripper
 }
 
-func NewSession() *Session {
-	return &Session{}
-}
-
 // Get request
 func (s *Session) Get(url string, opts ...option) (*Response, error) {
 	return s.Request(http.MethodGet, url, nil, opts...)
@@ -46,6 +42,16 @@ func (s *Session) Patch(url string, bodyReader *BodyReader, opts ...option) (*Re
 // Head request
 func (s *Session) Head(url string, opts ...option) (*Response, error) {
 	return s.Request(http.MethodHead, url, nil, opts...)
+}
+
+func (s *Session) Request(method, endpoint string, body *BodyReader, opts ...option) (*Response, error) {
+	req := Request{
+		Endpoint: endpoint,
+		Method:   method,
+		Body:     body,
+		Opts:     opts,
+	}
+	return s.Send(req)
 }
 
 func (s *Session) Send(request Request) (*Response, error) {
@@ -79,16 +85,6 @@ func (s *Session) Send(request Request) (*Response, error) {
 	return resp, nil
 }
 
-func (s *Session) Request(method, endpoint string, body *BodyReader, opts ...option) (*Response, error) {
-	req := Request{
-		Endpoint: endpoint,
-		Method:   method,
-		Body:     body,
-		Opts:     opts,
-	}
-	return s.Send(req)
-}
-
 func (s *Session) Close() error {
 	return nil
 }
@@ -116,15 +112,13 @@ func buildOptions(opts ...option) (*options, error) {
 func makeRequest(method, endpoint string, bodyReader *BodyReader, opts *options) (*http.Request, error) {
 	var body io.Reader
 	var contentType string
-	var req *http.Request
-	var err error
 
 	if bodyReader != nil {
 		body = bodyReader
 		contentType = bodyReader.ContentType
 	}
 
-	req, err = http.NewRequest(method, endpoint, body)
+	req, err := http.NewRequest(method, endpoint, body)
 	if err != nil {
 		return nil, err
 	}

@@ -44,7 +44,7 @@ type Request struct {
 }
 
 func (r *Request) Do(method, endpoint string, body *BodyReader, opts ...option) (*Response, error) {
-	session := NewSession()
+	session := &Session{}
 	defer session.Close()
 	return session.Request(method, endpoint, body, opts...)
 }
