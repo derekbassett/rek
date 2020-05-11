@@ -33,6 +33,9 @@ func Patch(url string, opts ...option) (*Response, error) {
 // HEAD request
 func Head(url string, opts ...option) (*Response, error) {
 	options, err := buildOptions(opts...)
+	if err != nil {
+		return nil, err
+	}
 
 	cl := makeClient(options)
 
@@ -58,6 +61,9 @@ func call(method, endpoint string, opts ...option) (*Response, error) {
 	cl := makeClient(options)
 
 	req, err := makeRequest(method, u.String(), options)
+	if err != nil {
+		return nil, err
+	}
 
 	res, err := cl.Do(req)
 	if err != nil {
