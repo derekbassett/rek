@@ -59,14 +59,12 @@ func (s *Session) Send(request Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	options, err := buildOptions(request.Opts...)
 	if err != nil {
 		return nil, err
 	}
-	req = applyRequestOptions(req, options)
-
 	cl := s.client()
+	req = applyRequestOptions(req, options)
 	cl = applyClientOptions(cl, options)
 	cl.Transport = s.transport()
 	res, err := cl.Do(req)

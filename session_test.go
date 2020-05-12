@@ -106,10 +106,18 @@ func TestRequest(t *testing.T) {
 	}
 }
 
-func TestWithTransport(t *testing.T) {
-	t.Fatal("not implemented")
-}
-
-func TestWithClient(t *testing.T) {
-	t.Fatal("not implemented")
+func TestClient(t *testing.T) {
+	tr := &recordingTransport{}
+	cl := &http.Client{
+		Transport: tr,
+	}
+	session := Session{Client: cl}
+	url := "http://dummy.faketld/"
+	session.Get(url) //nolint errcheck
+	if tr.req.Method != http.MethodGet {
+		t.Errorf("expected method %q; got %q", http.MethodGet, tr.req.Method)
+	}
+	if tr.req.URL.String() != url {
+		t.Errorf("expected method %q; got %q", url, tr.req.URL.String())
+	}
 }
