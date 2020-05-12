@@ -66,7 +66,9 @@ func (s *Session) Send(request Request) (*Response, error) {
 	cl := s.client()
 	req = applyRequestOptions(req, options)
 	cl = applyClientOptions(cl, options)
-	cl.Transport = s.transport()
+	if s.Client == nil {
+		cl.Transport = s.transport()
+	}
 	res, err := cl.Do(req)
 	if err != nil {
 		return nil, err
