@@ -17,7 +17,7 @@ func (t *recordingTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 
 func TestGetRequestFormat(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Get(url) //nolint
 	if tr.req.Method != http.MethodGet {
@@ -30,7 +30,7 @@ func TestGetRequestFormat(t *testing.T) {
 
 func TestPutRequestFormat(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Put(url, String("Reader")) //nolint
 	if tr.req.Method != http.MethodPut {
@@ -43,7 +43,7 @@ func TestPutRequestFormat(t *testing.T) {
 
 func TestPatchRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Patch(url, String("Reader")) //nolint errcheck
 	if tr.req.Method != http.MethodPatch {
@@ -56,7 +56,7 @@ func TestPatchRequest(t *testing.T) {
 
 func TestPostRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Post(url, String("Reader")) //nolint errcheck
 	if tr.req.Method != http.MethodPost {
@@ -69,7 +69,7 @@ func TestPostRequest(t *testing.T) {
 
 func TestDeleteRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Delete(url) //nolint errcheck
 	if tr.req.Method != "DELETE" {
@@ -82,7 +82,7 @@ func TestDeleteRequest(t *testing.T) {
 
 func TestHeadRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Head(url) //nolint errcheck
 	if tr.req.Method != http.MethodHead {
@@ -95,27 +95,11 @@ func TestHeadRequest(t *testing.T) {
 
 func TestRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Transport: tr}
+	session := &Session{http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Request(http.MethodOptions, url, nil) //nolint errcheck
 	if tr.req.Method != http.MethodOptions {
 		t.Errorf("expected method %q; got %q", http.MethodOptions, tr.req.Method)
-	}
-	if tr.req.URL.String() != url {
-		t.Errorf("expected method %q; got %q", url, tr.req.URL.String())
-	}
-}
-
-func TestClient(t *testing.T) {
-	tr := &recordingTransport{}
-	cl := &http.Client{
-		Transport: tr,
-	}
-	session := Session{Client: cl}
-	url := "http://dummy.faketld/"
-	session.Get(url) //nolint errcheck
-	if tr.req.Method != http.MethodGet {
-		t.Errorf("expected method %q; got %q", http.MethodGet, tr.req.Method)
 	}
 	if tr.req.URL.String() != url {
 		t.Errorf("expected method %q; got %q", url, tr.req.URL.String())

@@ -9,9 +9,7 @@ import (
 )
 
 type Session struct {
-	Header    http.Header
-	Client    *http.Client
-	Transport http.RoundTripper
+	http.Client
 }
 
 // Get request
@@ -63,13 +61,11 @@ func (s *Session) Send(request Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	cl := s.client()
+
 	req = applyRequestOptions(req, options)
-	cl = applyClientOptions(cl, options)
-	if s.Client == nil {
-		cl.Transport = s.transport()
-	}
-	res, err := cl.Do(req)
+	s.applyClientOptions(options)
+	s.Transport = s.transport()
+	res, err := s.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +87,6 @@ func (s *Session) transport() http.RoundTripper {
 		return s.Transport
 	}
 	return http.DefaultTransport
-}
-
-func (s *Session) client() *http.Client {
-	if s.Client != nil {
-		return s.Client
-	}
-	return &http.Client{}
 }
 
 func buildOptions(opts ...option) (*options, error) {
@@ -173,22 +162,20 @@ func applyRequestOptions(req *http.Request, opts *options) *http.Request {
 	return req
 }
 
-func applyClientOptions(cl *http.Client, opts *options) *http.Client {
+func (s *Session) applyClientOptions(opts *options) {
 	if opts.cookieJar != nil {
-		cl.Jar = *opts.cookieJar
+		s.Jar = *opts.cookieJar
 	}
 
 	if opts.timeout != 0 {
-		cl.Timeout = opts.timeout
+		s.Timeout = opts.timeout
 	}
 
 	if opts.disallowRedirects {
-		cl.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		s.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
 	}
-
-	return cl
 }
 
 func makeResponse(res *http.Response) (*Response, error) {
