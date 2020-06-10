@@ -2,101 +2,102 @@ package rek
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 )
 
-type options struct {
-	headers           map[string]string
-	timeout           time.Duration
-	username          string
-	password          string
-	userAgent         string
-	cookies           []*http.Cookie
-	cookieJar         *http.CookieJar
-	bearer            string
-	disallowRedirects bool
-	accept            string
-	apiKey            string
-	ctx               context.Context
+type Option func(tripper http.RoundTripper) http.RoundTripper
+type Options []Option
+
+type SessionOption func(*Session)
+type RequestOption func(*Request)
+
+type RoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (rt RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return rt(req)
 }
 
-type option func(*options)
-
-// Add headers to the request.
-func Headers(headers map[string]string) option {
-	return func(opts *options) {
-		opts.headers = headers
+// SetHeader to the request.
+func SetHeader(key, value string) RequestOption {
+	return func(req *Request) {
+		req.Header.Set(key, value)
 	}
 }
 
 // Add a timeout to the request.
-func Timeout(timeout time.Duration) option {
-	return func(opts *options) {
-		opts.timeout = timeout
+func Timeout(timeout time.Duration) SessionOption {
+	return func(s *Session) {
+		s.Timeout = timeout
 	}
 }
 
 // Add a basic auth username and password to the request.
-func BasicAuth(username, password string) option {
-	return func(opts *options) {
-		opts.username = username
-		opts.password = password
+func BasicAuth(username, password string) RequestOption {
+	return func(req *Request) {
+		if username != "" && password != "" {
+			req.SetBasicAuth(username, password)
+		}
 	}
 }
 
 // Add a User-Agent header to the request.
-func UserAgent(agent string) option {
-	return func(opts *options) {
-		opts.userAgent = agent
+func UserAgent(userAgent string) RequestOption {
+	return func(req *Request) {
+		req.Header.Set("User-Agent", userAgent)
 	}
 }
 
 // Add cookies to the request.
-func Cookies(cookies []*http.Cookie) option {
-	return func(opts *options) {
-		opts.cookies = cookies
+func Cookies(cookies []*http.Cookie) RequestOption {
+	return func(req *Request) {
+		for _, c := range cookies {
+			req.AddCookie(c)
+		}
 	}
 }
 
 // Add a cookie jar to the request.
-func CookieJar(jar http.CookieJar) option {
-	return func(opts *options) {
-		opts.cookieJar = &jar
+func CookieJar(jar http.CookieJar) SessionOption {
+	return func(s *Session) {
+		s.Jar = jar
 	}
 }
 
-// Add a bearer header of the form "Authorization: Bearer ..."
-func Bearer(bearer string) option {
-	return func(opts *options) {
-		opts.bearer = bearer
+// Bearer Add a bearer header of the form "Authorization: Bearer ..."
+func Bearer(bearer string) RequestOption {
+	return func(req *Request) {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearer))
 	}
 }
 
 // Turn redirects off.
-func DisallowRedirects() option {
-	return func(opts *options) {
-		opts.disallowRedirects = true
+func DisallowRedirects() SessionOption {
+	return func(s *Session) {
+		s.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
 	}
 }
 
 // Applies an Accept header to the request.
-func Accept(accept string) option {
-	return func(opts *options) {
-		opts.accept = accept
+func Accept(accept string) RequestOption {
+	return func(req *Request) {
+		req.Header.Set("Accept", accept)
 	}
 }
 
 // Adds an API key to the request.
-func ApiKey(key string) option {
-	return func(opts *options) {
-		opts.apiKey = key
+func ApiKey(key string) RequestOption {
+	return func(req *Request) {
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", key))
 	}
 }
 
 // Pass a context into the HTTP request (allows for request cancellation, for example).
-func WithContext(ctx context.Context) option {
-	return func(opts *options) {
-		opts.ctx = ctx
+func WithContext(ctx context.Context) RequestOption {
+	return func(req *Request) {
+		req.Request = req.Request.WithContext(ctx)
 	}
 }

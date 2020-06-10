@@ -72,7 +72,7 @@ func TestDo(t *testing.T) {
 			defer srv.Close()
 
 			endpoint := fmt.Sprintf("%s%s", srv.URL, tc.path)
-			resp, err := DefaultRequest.Do(tc.method, endpoint, String(tc.requestBody))
+			resp, err := Do(tc.method, endpoint, String(tc.requestBody))
 			if err != nil {
 				t.Fatal(err)
 			}

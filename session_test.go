@@ -69,7 +69,7 @@ func TestPostRequest(t *testing.T) {
 
 func TestDeleteRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{Client: http.Client{Transport: tr}}
+	var session = &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Delete(url) //nolint errcheck
 	if tr.req.Method != "DELETE" {
@@ -82,7 +82,7 @@ func TestDeleteRequest(t *testing.T) {
 
 func TestHeadRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{http.Client{Transport: tr}}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Head(url) //nolint errcheck
 	if tr.req.Method != http.MethodHead {
@@ -95,7 +95,7 @@ func TestHeadRequest(t *testing.T) {
 
 func TestRequest(t *testing.T) {
 	tr := &recordingTransport{}
-	session := &Session{http.Client{Transport: tr}}
+	session := &Session{Client: http.Client{Transport: tr}}
 	url := "http://dummy.faketld/"
 	session.Request(http.MethodOptions, url, nil) //nolint errcheck
 	if tr.req.Method != http.MethodOptions {
