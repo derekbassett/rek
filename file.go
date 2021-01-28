@@ -10,6 +10,23 @@ import (
 
 const defaultFileFieldName = "file"
 
+// Create a multipart file upload request.
+func EncodeFile(fieldName, filepath string, params map[string]string) (*BodyReader, error) {
+	file := &file{
+		FieldName: fieldName,
+		Filepath:  filepath,
+		Params:    params,
+	}
+	b, ct, err := buildMultipartBody(file)
+	if err != nil {
+		return nil, err
+	}
+	return &BodyReader{
+		b,
+		ct,
+	}, nil
+}
+
 type file struct {
 	FieldName string
 	Filepath  string
@@ -24,11 +41,11 @@ func (f *file) build() *file {
 	return f
 }
 
-func buildMultipartBody(opts *options) (io.Reader, string, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
+func buildMultipartBody(file *file) (io.Reader, string, error) {
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
 
-	f := opts.file.build()
+	f := file.build()
 
 	data, err := os.Open(f.Filepath)
 	if err != nil {
@@ -56,5 +73,5 @@ func buildMultipartBody(opts *options) (io.Reader, string, error) {
 		return nil, "", err
 	}
 
-	return body, writer.FormDataContentType(), nil
+	return &body, writer.FormDataContentType(), nil
 }
